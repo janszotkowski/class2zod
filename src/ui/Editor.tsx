@@ -26,22 +26,6 @@ export const Editor: React.FC = (): React.ReactElement => {
     const leftMonacoRef = React.useRef<any>(null);
     const rightRef = React.useRef<any>(null);
     const rightMonacoRef = React.useRef<any>(null);
-    const debounceId = React.useRef<number | null>(null);
-
-    // const formatTs = React.useCallback(async (code: string): Promise<string> => {
-    //     try {
-    //         return await prettier.format(code, {
-    //             parser: 'typescript',
-    //             plugins: [parserTypescript as any],
-    //             semi: false,
-    //             singleQuote: true,
-    //             trailingComma: 'none',
-    //             printWidth: 100
-    //         });
-    //     } catch {
-    //         return code;
-    //     }
-    // }, []);
 
     const run = React.useCallback(() => {
         const res = parseSourceToZod(input);
@@ -50,7 +34,9 @@ export const Editor: React.FC = (): React.ReactElement => {
         // nastav přímo do pravého editoru (pokud je)
         if (rightRef.current) {
             const model = rightRef.current.getModel?.();
-            if (model) rightRef.current.setValue(res.code);
+            if (model) {
+                rightRef.current.setValue(res.code);
+            }
         }
     }, [input, setOutput, setDiags, rightRef.current]);
 
@@ -63,10 +49,6 @@ export const Editor: React.FC = (): React.ReactElement => {
     const onInputChange = (v: string): void => {
         setInput(v);
         setDetected(guessLang(v));
-        if (debounceId.current) {
-            window.clearTimeout(debounceId.current);
-        }
-        debounceId.current = window.setTimeout(run, 250);
     };
 
     const onFormatOut = (): void => {
@@ -90,7 +72,7 @@ export const Editor: React.FC = (): React.ReactElement => {
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => run());
         // Ctrl/Cmd + B = format
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () => onFormatOut());
-    }, [run]); // eslint-disable-line
+    }, [run]);
 
     const onKotlin = (): void => {
         setInput(sampleKotlin);
