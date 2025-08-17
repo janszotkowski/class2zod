@@ -23,37 +23,37 @@ body {
 }
 
 * {
-    box-sizing: border-box
+    box-sizing: border-box;
 }
 
 body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
-    font: 14px/1.5 ui-sans-serif, system-ui
+    font: 14px/1.5 ui-sans-serif, system-ui;
 }
 
 .app {
     max-width: 1200px;
     margin: 24px auto;
-    padding: 0 16px
+    padding: 0 16px;
 }
 
 h1 {
     margin: 0 0 4px;
-    font-size: 20px
+    font-size: 20px;
 }
 
 .subtitle {
     color: var(--muted);
-    margin: 0 0 16px
+    margin: 0 0 16px;
 }
 
 .editor {
     background: var(--panel);
     border-radius: 16px;
     padding: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .25)
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
 }
 
 .toolbar {
@@ -61,7 +61,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px
+    margin-bottom: 12px;
 }
 
 button, select {
@@ -70,11 +70,41 @@ button, select {
     border: 1px solid #2a2f3a;
     border-radius: 10px;
     padding: 8px 12px;
-    cursor: pointer
+    cursor: pointer;
 }
 
 button:hover {
-    border-color: var(--acc)
+    border-color: var(--acc);
+}
+
+.diag {
+    margin-top: 12px;
+    background: #10131a;
+    border: 1px solid #2a2f3a;
+    border-radius: 12px;
+}
+
+.diag-title {
+    padding: 8px 12px;
+    color: var(--muted);
+}
+
+.diag-item {
+    padding: 8px 12px;
+    border-top: 1px solid #202634;
+}
+
+.diag-item.warn .diag-msg {
+    color: #eab308;
+}
+
+.diag-item.error .diag-msg {
+    color: #ef4444;
+}
+
+footer {
+    margin-top: 12px;
+    color: var(--muted);
 }
 
 .panes {
@@ -84,41 +114,17 @@ button:hover {
 
 .pane {
     width: 50%;
-    height: 45vh;
+    height: auto;
     background: #0f1217;
-    color: var(--fg);
     border: 1px solid #2a2f3a;
     border-radius: 12px;
-    padding: 10px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace
+    overflow: hidden;
 }
 
-.diag {
-    margin-top: 12px;
-    background: #10131a;
+.badge {
+    margin-left: 8px;
+    padding: 4px 8px;
     border: 1px solid #2a2f3a;
-    border-radius: 12px
-}
-
-.diag-title {
-    padding: 8px 12px;
-    color: var(--muted)
-}
-
-.diag-item {
-    padding: 8px 12px;
-    border-top: 1px solid #202634
-}
-
-.diag-item.warn .diag-msg {
-    color: #eab308
-}
-
-.diag-item.error .diag-msg {
-    color: #ef4444
-}
-
-footer {
-    margin-top: 12px;
-    color: var(--muted)
+    border-radius: 999px;
+    color: #9aa0a6;
 }

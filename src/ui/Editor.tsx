@@ -2,35 +2,81 @@ import * as React from 'react';
 import { parseSourceToZod } from '@/parser';
 import { Diagnostics } from './Diagnostics';
 import { notificationService } from '@/services/NotificationService.ts';
+import { MonacoPane } from '@/ui/MonacoPane.tsx';
 
 type Lang = 'auto' | 'java' | 'kotlin';
 
+function guessLang(s: string): Lang {
+    if (/\bdata\s+class\b/.test(s)) {
+        return 'kotlin';
+    }
+    if (/\b(val|var)\s+\w+\s*:/.test(s)) {
+        return 'kotlin';
+    }
+    return 'java';
+}
+
 export const Editor: React.FC = (): React.ReactElement => {
-    const [lang, setLang] = React.useState<Lang>('auto');
     const [input, setInput] = React.useState<string>(sampleJava);
     const [output, setOutput] = React.useState<string>('');
     const [diags, setDiags] = React.useState<any[]>([]);
+    const [detected, setDetected] = React.useState<Lang>(guessLang(sampleJava));
+
+    const leftRef = React.useRef<any>(null);
+    const leftMonacoRef = React.useRef<any>(null);
+    const rightRef = React.useRef<any>(null);
+    const rightMonacoRef = React.useRef<any>(null);
+    const debounceId = React.useRef<number | null>(null);
+
+    // const formatTs = React.useCallback(async (code: string): Promise<string> => {
+    //     try {
+    //         return await prettier.format(code, {
+    //             parser: 'typescript',
+    //             plugins: [parserTypescript as any],
+    //             semi: false,
+    //             singleQuote: true,
+    //             trailingComma: 'none',
+    //             printWidth: 100
+    //         });
+    //     } catch {
+    //         return code;
+    //     }
+    // }, []);
 
     const run = React.useCallback(() => {
         const res = parseSourceToZod(input);
         setOutput(res.code);
         setDiags(res.diagnostics);
-    }, [input, setOutput, setDiags]);
+        // nastav přímo do pravého editoru (pokud je)
+        if (rightRef.current) {
+            const model = rightRef.current.getModel?.();
+            if (model) rightRef.current.setValue(res.code);
+        }
+    }, [input, setOutput, setDiags, rightRef.current]);
 
+    // init parse
     React.useEffect(() => {
         run();
-    }, [run]);
+    }, []); // eslint-disable-line
 
-    const onExample = (which: 'java' | 'kotlin'): void => {
-        if (which === 'java') {
-            setInput(sampleJava);
-        } else {
-            setInput(sampleKotlin);
+    // debounce při psaní vlevo
+    const onInputChange = (v: string): void => {
+        setInput(v);
+        setDetected(guessLang(v));
+        if (debounceId.current) {
+            window.clearTimeout(debounceId.current);
         }
-        setTimeout(run, 0);
+        debounceId.current = window.setTimeout(run, 250);
     };
 
-    const copy = async (): Promise<void> => {
+    const onFormatOut = (): void => {
+        setOutput(output);
+        if (rightRef.current) {
+            rightRef.current.setValue(output);
+        }
+    };
+
+    const onCopy = async (): Promise<void> => {
         try {
             await navigator.clipboard.writeText(output);
             notificationService.success('Copied to clipboard');
@@ -39,45 +85,63 @@ export const Editor: React.FC = (): React.ReactElement => {
         }
     };
 
+    const bindShortcuts = React.useCallback((editor: any, monaco: any) => {
+        // Ctrl/Cmd + Enter = parse
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => run());
+        // Ctrl/Cmd + B = format
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () => onFormatOut());
+    }, [run]); // eslint-disable-line
+
+    const onKotlin = (): void => {
+        setInput(sampleKotlin);
+        setDetected('kotlin');
+        setTimeout(run, 0);
+    };
+
+    const onJava = (): void => {
+        setInput(sampleJava);
+        setDetected('java');
+        setTimeout(run, 0);
+    };
+
     return (
         <div className={'editor'}>
             <div className={'toolbar'}>
                 <div className={'left'}>
-                    <button onClick={() => onExample('java')}>
+                    <button onClick={onJava}>
                         Java example
                     </button>
-
-                    <button onClick={() => onExample('kotlin')}>
+                    <button onClick={onKotlin}>
                         Kotlin example
                     </button>
+                    <span className={'badge'}>detekováno: {detected === 'kotlin' ? 'Kotlin' : 'Java'}</span>
                 </div>
                 <div className={'right'}>
-                    <select
-                        value={lang}
-                        onChange={e => setLang(e.target.value as Lang)}
-                        disabled
-                    >
-                        <option value={'auto'}>auto-detect</option>
-                        <option value={'java'}>java</option>
-                        <option value={'kotlin'}>kotlin</option>
-                    </select>
-                    <button onClick={run}>Parse</button>
-                    <button onClick={copy}>Copy</button>
+                    <button onClick={run} title={'Ctrl/Cmd + Enter'}>Parse</button>
+                    <button onClick={onCopy}>Copy</button>
                 </div>
             </div>
 
             <div className={'panes'}>
-                <textarea
-                    className={'pane input'}
+                <MonacoPane
                     value={input}
-                    onChange={e => setInput(e.target.value)}
-                    placeholder={'Vlož Java nebo Kotlin class...'}
+                    language={'java'}
+                    onChange={onInputChange}
+                    onReady={(ed, monaco) => {
+                        leftRef.current = ed;
+                        leftMonacoRef.current = monaco;
+                        bindShortcuts(ed, monaco);
+                    }}
                 />
-                <textarea
-                    className={'pane output'}
+                <MonacoPane
                     value={output}
-                    onChange={e => setOutput(e.target.value)}
-                    placeholder={'Zod v4 output...'}
+                    language={'typescript'}
+                    readOnly
+                    onReady={(ed, monaco) => {
+                        rightRef.current = ed;
+                        rightMonacoRef.current = monaco;
+                        bindShortcuts(ed, monaco);
+                    }}
                 />
             </div>
 
