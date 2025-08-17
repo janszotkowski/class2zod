@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ToastContainer, Zoom } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import { App } from '@/App.tsx';
 
 const rootEl = document.getElementById('root');
@@ -8,7 +8,11 @@ if (rootEl) {
     const root = ReactDOM.createRoot(rootEl);
     root.render(
         <React.StrictMode>
-            <ToastContainer transition={Zoom}/>
+            <ToastContainer
+                position={'bottom-right'}
+                theme={'dark'}
+                hideProgressBar
+            />
             <App/>
         </React.StrictMode>
     );

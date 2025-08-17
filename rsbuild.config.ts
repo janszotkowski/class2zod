@@ -3,5 +3,6 @@ import { pluginReact } from '@rsbuild/plugin-react';
 import { pluginSass } from '@rsbuild/plugin-sass';
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginSass()],
+    plugins: [pluginReact(), pluginSass()],
+    html: {title: 'Class2Zod'}
 });
