@@ -249,4 +249,33 @@ describe('Java → Zod v4', () => {
         expect(code).toContain(`baz: z.unknown()`);
         expect(diagnostics.some(d => /Unknown type 'FooBar'/.test(d.message))).toBe(true);
     });
+
+    it('@Email, @NotBlank, @Positive/@Negative, @DecimalMin/Max', () => {
+        const java = trim(`
+      import jakarta.validation.constraints.*;
+
+      public class C {
+        @Email
+        public String email;
+        @NotBlank
+        public String code;
+        @Positive
+        public int qty;
+        @Negative
+        public int debt;
+        @DecimalMin(value="1.5", inclusive=false)
+        @DecimalMax(value="10.0", inclusive=true)
+        public double price;
+      }
+    `);
+
+        const {code, diagnostics} = parseSourceToZod(java);
+        expect(diagnostics).toEqual([]);
+
+        expect(code).toContain('email: z.string().email()');
+        expect(code).toContain('code: z.string().min(1)');
+        expect(code).toMatch(/qty:\s*z\.number\(\)\.int\(\)\.positive\(\)/);
+        expect(code).toMatch(/debt:\s*z\.number\(\)\.int\(\)\.negative\(\)/);
+        expect(code).toMatch(/price:\s*z\.number\(\)\.min\(1\.5, \{ inclusive: false \}\)\.max\(10\.0\)/);
+    });
 });

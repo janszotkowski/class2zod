@@ -71,7 +71,7 @@ export function readBalanced(
     s: string,
     start: number,
     open: string = '(',
-    close: string = ')'
+    close: string = ')',
 ): { content: string; end: number; } | null {
     if (s[start] !== open) {
         return null;

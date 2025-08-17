@@ -145,7 +145,7 @@ function parseKotlinParams(params: string): Field[] {
             emitName: ann.jsonProperty || name,
             type,
             optional,
-            ann
+            ann,
         });
     }
     return out;
@@ -168,7 +168,7 @@ function parseKotlinBodyProps(body: string): Field[] {
             emitName: ann.jsonProperty || name,
             type,
             optional,
-            ann
+            ann,
         });
     }
     return out;

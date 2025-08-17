@@ -1,7 +1,7 @@
 import { Diagnostic, Known } from './types';
 import { splitTopLevel } from './utils';
 
-export function mapType(typeText: string, known: Known): { expr: string; diagnostics: Diagnostic[] } {
+export function mapType(typeText: string, known: Known): { expr: string; diagnostics: Diagnostic[]; } {
     const diagnostics: Diagnostic[] = [];
     let t = typeText.trim().replace(/\s+/g, ' ');
     t = t.replace(/^final\s+/, '');
@@ -121,10 +121,10 @@ export function mapType(typeText: string, known: Known): { expr: string; diagnos
         const val = mapType(mapOf[1], known);
         diagnostics.push(...key.diagnostics, ...val.diagnostics);
         const stringKey = key.expr.startsWith('z.string()') || /^[A-Za-z_]\w*Schema$/.test(key.expr); // enum schema jako key? → z.enum je string-based
-        expr = stringKey ? `z.record(z.string(), ${val.expr})` : `z.record(z.string(), z.unknown())`;
+        expr = stringKey ? `z.record(z.string(), ${val.expr})` : 'z.record(z.string(), z.unknown())';
         if (!stringKey) diagnostics.push({
             level: 'warn',
-            message: `Map key '${mapOf[0]}' not supported → string keys used`
+            message: `Map key '${mapOf[0]}' not supported → string keys used`,
         });
     } else {
         const base = baseToZod(t);

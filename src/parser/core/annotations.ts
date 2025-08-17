@@ -40,13 +40,44 @@ export function parseAnnotationsJava(raw: string): Ann {
         a.jsonProperty = jp2[1];
     }
 
+    if (/@(?:[\w.]+)?Email\b/.test(raw)) {
+        a.email = true;
+    }
+    if (/@(?:[\w.]+)?NotBlank\b|@(?:[\w.]+)?NotEmpty\b/.test(raw)) {
+        a.notBlankOrEmpty = true;
+    }
+    if (/@(?:[\w.]+)?Positive\b/.test(raw)) {
+        a.positive = true;
+    }
+    if (/@(?:[\w.]+)?Negative\b/.test(raw)) {
+        a.negative = true;
+    }
+
+    // DecimalMin/Max – zachovej přesný text hodnoty
+    const decMinArgs = /@(?:[\w.]+)?DecimalMin\s*\(\s*([^)]*)\)/.exec(raw)?.[1];
+    if (decMinArgs) {
+        const vMatch = /value\s*=\s*"([^"]+)"/.exec(decMinArgs) || /"([^"]+)"/.exec(decMinArgs);
+        const incMatch = /inclusive\s*=\s*(true|false)/.exec(decMinArgs);
+        if (vMatch) {
+            a.decimalMin = {valueText: vMatch[1], inclusive: incMatch ? incMatch[1] !== 'false' : true};
+        }
+    }
+    const decMaxArgs = /@(?:[\w.]+)?DecimalMax\s*\(\s*([^)]*)\)/.exec(raw)?.[1];
+    if (decMaxArgs) {
+        const vMatch = /value\s*=\s*"([^"]+)"/.exec(decMaxArgs) || /"([^"]+)"/.exec(decMaxArgs);
+        const incMatch = /inclusive\s*=\s*(true|false)/.exec(decMaxArgs);
+        if (vMatch) {
+            a.decimalMax = {valueText: vMatch[1], inclusive: incMatch ? incMatch[1] !== 'false' : true};
+        }
+    }
+
     return a;
 }
 
 export function parseAnnotationsKotlin(raw: string): Ann {
     const normalized = raw.replace(/@field:/g, '@').replace(/@get:/g, '@');
     const a = parseAnnotationsJava(normalized);
-    const moshi = /@Json\s*\(\s*name\s*=\s*"([^"]+)"\s*\)/.exec(normalized);
+    const moshi = /@(?:[\w.]+)?Json\s*\(\s*name\s*=\s*"([^"]+)"\s*\)/.exec(normalized);
 
     if (moshi) {
         a.jsonProperty = moshi[1];

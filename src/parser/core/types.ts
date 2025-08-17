@@ -15,6 +15,12 @@ export type Ann = {
     pattern?: string;
     jsonProperty?: string;
     raw?: string[];
+    email?: boolean;
+    notBlankOrEmpty?: boolean;
+    positive?: boolean;
+    negative?: boolean;
+    decimalMin?: { valueText: string; inclusive: boolean; };
+    decimalMax?: { valueText: string; inclusive: boolean; };
 };
 
 export type Field = {

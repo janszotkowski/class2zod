@@ -210,4 +210,29 @@ describe('Kotlin → Zod v4', () => {
         expect(code).toContain(`initial: z.string().length(1)`);
         expect(code).toContain(`active: z.boolean()`);
     });
+
+    it('@Email, @NotEmpty, @Positive/@Negative, @DecimalMin/Max (včetně @field: prefixu)', () => {
+        const kt = trim(`
+      import jakarta.validation.constraints.*
+
+      data class K(
+        @field:Email val email: String,
+        @field:NotEmpty val code: String,
+        @field:Positive val qty: Int,
+        @field:Negative val debt: Int,
+        @field:DecimalMin(value="0.01", inclusive=true)
+        @field:DecimalMax(value="99.9", inclusive=false)
+        val price: Double
+      )
+    `);
+
+        const {code, diagnostics} = parseSourceToZod(kt);
+        expect(diagnostics).toEqual([]);
+
+        expect(code).toContain('email: z.string().email()');
+        expect(code).toContain('code: z.string().min(1)');
+        expect(code).toMatch(/qty:\s*z\.number\(\)\.int\(\)\.positive\(\)/);
+        expect(code).toMatch(/debt:\s*z\.number\(\)\.int\(\)\.negative\(\)/);
+        expect(code).toMatch(/price:\s*z\.number\(\)\.min\(0\.01\)\.max\(99\.9, \{ inclusive: false \}\)/);
+    });
 });

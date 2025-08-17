@@ -14,6 +14,6 @@ if (rootEl) {
                 hideProgressBar
             />
             <App/>
-        </React.StrictMode>
+        </React.StrictMode>,
     );
 }

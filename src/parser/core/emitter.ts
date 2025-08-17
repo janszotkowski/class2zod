@@ -67,5 +67,25 @@ function applyAnnotations(expr: string, a: Ann): string {
     if (isNum(a.max) && expr.startsWith('z.number()')) {
         expr = `${expr}.max(${a.max})`;
     }
+
+    if (a.email && expr.startsWith('z.string()')) {
+        expr = `${expr}.email()`;
+    }
+    if (a.notBlankOrEmpty && expr.startsWith('z.string()')) {
+        expr = `${expr}.min(1)`;
+    }
+    if (a.positive && expr.startsWith('z.number()')) {
+        expr = `${expr}.positive()`;
+    }
+    if (a.negative && expr.startsWith('z.number()')) {
+        expr = `${expr}.negative()`;
+    }
+
+    if (a.decimalMin && expr.startsWith('z.number()')) {
+        expr = a.decimalMin.inclusive ? `${expr}.min(${a.decimalMin.valueText})` : `${expr}.min(${a.decimalMin.valueText}, { inclusive: false })`;
+    }
+    if (a.decimalMax && expr.startsWith('z.number()')) {
+        expr = a.decimalMax.inclusive ? `${expr}.max(${a.decimalMax.valueText})` : `${expr}.max(${a.decimalMax.valueText}, { inclusive: false })`;
+    }
     return expr;
 }

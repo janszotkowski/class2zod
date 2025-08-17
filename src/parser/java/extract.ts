@@ -116,7 +116,7 @@ function extractJavaFields(body: string): Field[] {
                 emitName: ann.jsonProperty || name,
                 type: finalType,
                 optional,
-                ann
+                ann,
             });
         }
     }

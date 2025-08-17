@@ -14,7 +14,7 @@ export function parseSourceToZod(source: string): ParseResult {
 
     const known: Known = {
         classes: new Set(classes.map(c => c.name)),
-        enums: new Set(enums.map(e => e.name))
+        enums: new Set(enums.map(e => e.name)),
     };
 
     const {code, diagnostics} = emitSchemas(classes, known, enums);
