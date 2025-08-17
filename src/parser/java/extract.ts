@@ -1,6 +1,6 @@
-import { Clazz, Field } from '../core/types';
+import { Clazz, EnumDef, Field } from '../core/types';
 import { parseAnnotationsJava } from '../core/annotations';
-import { splitTopLevel } from '../core/utils';
+import { readBalanced, splitTopLevel, topLevelSemicolon } from '../core/utils';
 
 export function extractJavaClasses(src: string): Clazz[] {
     const classes: Clazz[] = [];
@@ -13,6 +13,46 @@ export function extractJavaClasses(src: string): Clazz[] {
         classes.push({name, fields});
     }
     return classes;
+}
+
+export function extractJavaEnums(src: string): EnumDef[] {
+    const enums: EnumDef[] = [];
+    const re = /(?:public\s+|protected\s+|private\s+)?enum\s+([A-Za-z_]\w*)\s*\{/g;
+    let m: RegExpExecArray | null;
+
+    while ((m = re.exec(src))) {
+        const name = m[1];
+        const bracePos = src.indexOf('{', m.index);
+        const blk = readBalanced(src, bracePos, '{', '}');
+        if (!blk) {
+            continue;
+        }
+
+        // vezmeme jen část před případným ';' (po něm mohou být members)
+        let body = blk.content;
+        const semi = topLevelSemicolon(body);
+        if (semi >= 0) {
+            body = body.slice(0, semi);
+        }
+
+        const items = splitTopLevel(body, ',');
+        const values: string[] = [];
+        for (const raw of items) {
+            const seg = raw.trim();
+            if (!seg) {
+                continue;
+            }
+            const mm = /^([A-Za-z_]\w*)/.exec(seg); // A(1), GREEN { ... }, BLUE → název
+            if (mm) {
+                values.push(mm[1]);
+            }
+        }
+
+        if (values.length) {
+            enums.push({name, values});
+        }
+    }
+    return enums;
 }
 
 function extractJavaFields(body: string): Field[] {
@@ -41,7 +81,9 @@ function extractJavaFields(body: string): Field[] {
 
         // rozpad na typ + deklarátory oddělené čárkou
         const parts = splitTopLevel(stmt, ',').map(s => s.trim()).filter(Boolean);
-        if (parts.length === 0) continue;
+        if (parts.length === 0) {
+            continue;
+        }
 
         // typ je první část bez závěrečného názvu proměnné
         const typeToken = parts[0];
@@ -74,7 +116,7 @@ function extractJavaFields(body: string): Field[] {
                 emitName: ann.jsonProperty || name,
                 type: finalType,
                 optional,
-                ann,
+                ann
             });
         }
     }

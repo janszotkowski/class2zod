@@ -30,6 +30,16 @@ export type Clazz = {
     fields: Field[];
 };
 
+export type EnumDef = {
+    name: string;
+    values: string[];
+};
+
+export type Known = {
+    classes: Set<string>;
+    enums: Set<string>;
+};
+
 export type ParseResult = {
     code: string;
     diagnostics: Diagnostic[];

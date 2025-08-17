@@ -1,7 +1,7 @@
-import { Diagnostic } from './types';
+import { Diagnostic, Known } from './types';
 import { splitTopLevel } from './utils';
 
-export function mapType(typeText: string, known: Set<string>): { expr: string; diagnostics: Diagnostic[]; } {
+export function mapType(typeText: string, known: Known): { expr: string; diagnostics: Diagnostic[] } {
     const diagnostics: Diagnostic[] = [];
     let t = typeText.trim().replace(/\s+/g, ' ');
     t = t.replace(/^final\s+/, '');
@@ -18,10 +18,9 @@ export function mapType(typeText: string, known: Set<string>): { expr: string; d
     // Optional<T>
     const opt = /^Optional\s*<([\s\S]+)>$/.exec(t);
     if (opt) {
-        t = opt[1].trim();   // ⬅️ jen rozbalit, BEZ .optional()
+        t = opt[1].trim(); // optionalitu řeší emitter
     }
 
-    // T[]...
     let arrayDepth = 0;
     while (/\[\s*\]$/.test(t)) {
         arrayDepth++;
@@ -30,6 +29,12 @@ export function mapType(typeText: string, known: Set<string>): { expr: string; d
 
     function baseToZod(name: string): { expr: string; ref?: string; } {
         const simple = name.replace(/^([A-Za-z_$][\w$]*\.)+/, '');
+
+        // ⬇️ ENUM: pokud je to známý enum, použij přímo <Enum>Schema
+        if (known.enums.has(simple)) {
+            return {expr: `${simple}Schema`}; // enum schema je konečný, není potřeba lazy
+        }
+
         switch (simple) {
             case 'String':
                 return {expr: 'z.string()'};
@@ -58,6 +63,7 @@ export function mapType(typeText: string, known: Set<string>): { expr: string; d
             case 'ByteArray':
                 return {expr: 'z.array(z.number().int())'};
         }
+
         if (
             name === 'java.util.Date' ||
             /^java\.time\./.test(name) ||
@@ -66,7 +72,8 @@ export function mapType(typeText: string, known: Set<string>): { expr: string; d
             return {expr: 'z.string()'};
         }
 
-        if (known.has(simple)) {
+        // ⬇️ třída známá z inputu → lazy
+        if (known.classes.has(simple)) {
             return {expr: `z.lazy(() => ${simple}Schema)`, ref: simple};
         }
 
@@ -113,11 +120,11 @@ export function mapType(typeText: string, known: Set<string>): { expr: string; d
         const key = mapType(mapOf[0], known);
         const val = mapType(mapOf[1], known);
         diagnostics.push(...key.diagnostics, ...val.diagnostics);
-        const stringKey = key.expr.startsWith('z.string()');
-        expr = stringKey ? `z.record(z.string(), ${val.expr})` : 'z.record(z.string(), z.unknown())';
+        const stringKey = key.expr.startsWith('z.string()') || /^[A-Za-z_]\w*Schema$/.test(key.expr); // enum schema jako key? → z.enum je string-based
+        expr = stringKey ? `z.record(z.string(), ${val.expr})` : `z.record(z.string(), z.unknown())`;
         if (!stringKey) diagnostics.push({
             level: 'warn',
-            message: `Map key '${mapOf[0]}' not supported → string keys used`,
+            message: `Map key '${mapOf[0]}' not supported → string keys used`
         });
     } else {
         const base = baseToZod(t);

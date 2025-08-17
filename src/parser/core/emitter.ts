@@ -1,12 +1,24 @@
-import { Ann, Clazz, Diagnostic } from './types';
+import { Ann, Clazz, Diagnostic, EnumDef, Known } from './types';
 import { isNum, javaRegexToJsLiteral, quoteKey } from './utils';
 import { mapType } from './typeMapping';
 
-export function emitSchemas(models: Clazz[], known: Set<string>): { code: string; diagnostics: Diagnostic[]; } {
+export function emitSchemas(models: Clazz[], known: Known, enums: EnumDef[]): {
+    code: string;
+    diagnostics: Diagnostic[];
+} {
     const diagnostics: Diagnostic[] = [];
     const lines: string[] = [];
     lines.push('import { z } from \'zod\'', '');
 
+    // ⬇️ nejdřív enumy
+    for (const e of enums) {
+        const values = e.values.map(v => `'${v.replace(/'/g, '\\\'')}'`).join(', ');
+        lines.push(`// ${e.name} (enum)`);
+        lines.push(`export const ${e.name}Schema = z.enum([${values}])`);
+        lines.push(`export type ${e.name} = z.infer<typeof ${e.name}Schema>`, '');
+    }
+
+    // pak třídy
     for (const m of models) {
         lines.push(`// ${m.name}`);
 
@@ -23,7 +35,6 @@ export function emitSchemas(models: Clazz[], known: Set<string>): { code: string
             if (shouldBeOptional && !alreadyOptional) {
                 expr = `${expr}.optional()`;
             }
-
             expr = expr.replace(/(\.optional\(\))+/, '.optional()');
 
             objectLines.push(`  ${quoteKey(f.emitName)}: ${expr}`);
@@ -43,8 +54,12 @@ function applyAnnotations(expr: string, a: Ann): string {
         expr = `${expr}.regex(${javaRegexToJsLiteral(a.pattern)})`;
     }
     if (a.size && (expr.startsWith('z.string()') || expr.startsWith('z.array('))) {
-        if (isNum(a.size.min)) expr = `${expr}.min(${a.size.min})`;
-        if (isNum(a.size.max)) expr = `${expr}.max(${a.size.max})`;
+        if (isNum(a.size.min)) {
+            expr = `${expr}.min(${a.size.min})`;
+        }
+        if (isNum(a.size.max)) {
+            expr = `${expr}.max(${a.size.max})`;
+        }
     }
     if (isNum(a.min) && expr.startsWith('z.number()')) {
         expr = `${expr}.min(${a.min})`;

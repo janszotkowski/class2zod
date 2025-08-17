@@ -1,6 +1,6 @@
-import { Clazz, Field } from '../core/types';
+import { Clazz, EnumDef, Field } from '../core/types';
 import { parseAnnotationsKotlin } from '../core/annotations';
-import { splitTopLevel, readBalanced } from '../core/utils';
+import { readBalanced, splitTopLevel, topLevelSemicolon } from '../core/utils';
 
 export function extractKotlinClasses(src: string): Clazz[] {
     const classes: Clazz[] = [];
@@ -61,6 +61,45 @@ export function extractKotlinClasses(src: string): Clazz[] {
     return coalesceByName(classes);
 }
 
+export function extractKotlinEnums(src: string): EnumDef[] {
+    const enums: EnumDef[] = [];
+    const re = /enum\s+class\s+([A-Za-z_]\w*)\s*\{/g;
+    let m: RegExpExecArray | null;
+
+    while ((m = re.exec(src))) {
+        const name = m[1];
+        const bracePos = src.indexOf('{', m.index);
+        const blk = readBalanced(src, bracePos, '{', '}');
+        if (!blk) {
+            continue;
+        }
+
+        let body = blk.content;
+        // část před případným ';' (po něm mohou být metody/vlastnosti)
+        const semi = topLevelSemicolon(body);
+        if (semi >= 0) {
+            body = body.slice(0, semi);
+        }
+
+        const parts = splitTopLevel(body, ',');
+        const values: string[] = [];
+        for (const raw of parts) {
+            const seg = raw.trim();
+            if (!seg) {
+                continue;
+            }
+            const mm = /^([A-Za-z_]\w*)/.exec(seg);
+            if (mm) {
+                values.push(mm[1]);
+            }
+        }
+        if (values.length) {
+            enums.push({name, values});
+        }
+    }
+    return enums;
+}
+
 function readBodyAfter(src: string, start: number): string | null {
     // najdi další '{' od pozice start a načti vyvážený blok
     const brace = src.indexOf('{', start);
@@ -106,7 +145,7 @@ function parseKotlinParams(params: string): Field[] {
             emitName: ann.jsonProperty || name,
             type,
             optional,
-            ann,
+            ann
         });
     }
     return out;
@@ -129,7 +168,7 @@ function parseKotlinBodyProps(body: string): Field[] {
             emitName: ann.jsonProperty || name,
             type,
             optional,
-            ann,
+            ann
         });
     }
     return out;
@@ -157,3 +196,4 @@ function coalesceByName(items: Clazz[]): Clazz[] {
 
     return [...map.values()];
 }
+
