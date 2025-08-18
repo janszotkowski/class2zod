@@ -278,4 +278,58 @@ describe('Java → Zod v4', () => {
         expect(code).toMatch(/debt:\s*z\.number\(\)\.int\(\)\.negative\(\)/);
         expect(code).toMatch(/price:\s*z\.number\(\)\.min\(1\.5, \{ inclusive: false \}\)\.max\(10\.0\)/);
     });
+
+    it('Pattern s escapovanou tečkou a ^$', () => {
+        const src = trim(`
+      import jakarta.validation.constraints.*;
+      public class A { @Pattern(regexp="^A\\.B$") public String code; }
+    `);
+        const {code} = parseSourceToZod(src);
+        expect(code).toContain(`code: z.string().regex(/^A\\.B$/)`);
+    });
+
+    it('Pattern s čísly \\d{3}-\\d{2}', () => {
+        const src = trim(`
+      import jakarta.validation.constraints.*;
+      public class A { @Pattern(regexp="^\\\\d{3}-\\\\d{2}$") public String ssn; }
+    `);
+        const {code} = parseSourceToZod(src);
+        expect(code).toContain(`ssn: z.string().regex(/^\\d{3}-\\d{2}$/)`);
+    });
+
+    it('Size(min) na List', () => {
+        const src = trim(`
+      import jakarta.validation.constraints.*; import java.util.*;
+      public class A { @Size(min=1) public List<String> tags; }
+    `);
+        const {code} = parseSourceToZod(src);
+        expect(code).toContain(`tags: z.array(z.string()).min(1)`);
+    });
+
+    it('Size(max) na String', () => {
+        const src = trim(`
+      import jakarta.validation.constraints.*;
+      public class A { @Size(max=10) public String s; }
+    `);
+        const {code} = parseSourceToZod(src);
+        expect(code).toContain(`s: z.string().max(10)`);
+    });
+
+    it('Size(min,max) na String', () => {
+        const src = trim(`
+      import jakarta.validation.constraints.*;
+      public class A { @Size(min=2, max=5) public String s; }
+    `);
+        const {code} = parseSourceToZod(src);
+        expect(code).toContain(`s: z.string().min(2).max(5)`);
+    });
+
+    it('Pattern + Size kombinace', () => {
+        const src = trim(`
+      import jakarta.validation.constraints.*;
+      public class A { @Size(min=3) @Pattern(regexp="^[A-Z]+$") public String s; }
+    `);
+        const {code} = parseSourceToZod(src);
+        expect(code).toContain(`s: z.string().regex(/^[A-Z]+$/).min(3)`);
+    });
 });

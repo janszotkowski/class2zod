@@ -61,38 +61,69 @@ export function quoteKey(k: string): string {
     return /^[A-Za-z_]\w*$/.test(k) ? k : `'${k.replace(/'/g, '\\\'')}'`;
 }
 
-export function javaRegexToJsLiteral(pattern: string): string {
-    return `/${pattern.replace(/\//g, '\\/')}/`;
+export function javaRegexToJsLiteral(pat: string): string {
+    let s = pat;
+
+    // 1) opakovaně zredukuj páry backslashů: "\\\\d" -> "\\d" -> "\d"
+    for (let i = 0; i < 3; i++) s = s.replace(/\\\\/g, '\\');
+
+    // 2) udrž speciální znaky jako escape sekvence (ne reálné znaky)
+    s = s.replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+
+    // 3) escapuj forward slashe, aby neukončily literál
+    s = s.replace(/\//g, '\\/');
+
+    return `/${s}/`;
 }
 
 export const isNum = (x: unknown): x is number => typeof x === 'number' && !Number.isNaN(x);
 
-export function readBalanced(
-    s: string,
-    start: number,
-    open: string = '(',
-    close: string = ')',
-): { content: string; end: number; } | null {
+export function readBalanced(s: string, start: number, open = '{', close = '}'): {
+    content: string;
+    end: number;
+} | undefined {
     if (s[start] !== open) {
-        return null;
+        return undefined;
     }
-
-    let depth = 1;
-    let i = start + 1;
-    const begin = i;
+    let depth = 0;
+    let i = start;
+    let inStr = false;
+    let quote: '"' | '\'' | null = null;
 
     while (i < s.length) {
         const ch = s[i];
-        if (ch === open) depth++;
-        else if (ch === close) {
+
+        if (inStr) {
+            if (ch === '\\') {
+                i += 2;
+                continue;
+            }
+            if (ch === quote) {
+                inStr = false;
+                quote = null;
+            }
+            i++;
+            continue;
+        }
+
+        if (ch === '"' || ch === '\'') {
+            inStr = true;
+            quote = ch as any;
+            i++;
+            continue;
+        }
+
+        if (ch === open) {
+            depth++;
+        } else if (ch === close) {
             depth--;
             if (depth === 0) {
-                return {content: s.slice(begin, i), end: i};
+                return {content: s.slice(start + 1, i), end: i};
             }
         }
         i++;
     }
-    return null;
+    return undefined;
 }
 
 export function topLevelSemicolon(s: string): number {

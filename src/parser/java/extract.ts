@@ -4,13 +4,22 @@ import { readBalanced, splitTopLevel, topLevelSemicolon } from '../core/utils';
 
 export function extractJavaClasses(src: string): Clazz[] {
     const classes: Clazz[] = [];
-    const classRe = /(?:public\s+|protected\s+|private\s+)?class\s+([A-Za-z_]\w*)[\s\S]*?\{([\s\S]*?)\}/g;
+    const re = /((?:\s*@[\w.]+(?:\([^)]*\))?\s*)*)(?:public|protected|private|abstract|final|\s)*class\s+([A-Za-z_]\w*)/g;
     let m: RegExpExecArray | null;
-    while ((m = classRe.exec(src))) {
-        const name = m[1];
-        const body = m[2];
+    while ((m = re.exec(src))) {
+        const name = m[2];
+        const bracePos = src.indexOf('{', re.lastIndex);
+        if (bracePos < 0) {
+            continue;
+        }
+        const blk = readBalanced(src, bracePos, '{', '}');
+        if (!blk) {
+            continue;
+        }
+        const body = blk.content;
         const fields = extractJavaFields(body);
         classes.push({name, fields});
+        re.lastIndex = blk.end + 1;
     }
     return classes;
 }
