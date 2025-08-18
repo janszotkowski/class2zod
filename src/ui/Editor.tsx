@@ -38,12 +38,12 @@ export const Editor: React.FC = (): React.ReactElement => {
                 rightRef.current.setValue(res.code);
             }
         }
-    }, [input, setOutput, setDiags, rightRef.current]);
+    }, [input, setOutput, setDiags]);
 
     // init parse
     React.useEffect(() => {
         run();
-    }, []); // eslint-disable-line
+    }, [run]);
 
     // debounce při psaní vlevo
     const onInputChange = (v: string): void => {
@@ -51,12 +51,12 @@ export const Editor: React.FC = (): React.ReactElement => {
         setDetected(guessLang(v));
     };
 
-    const onFormatOut = (): void => {
+    const onFormatOut = React.useCallback((): void => {
         setOutput(output);
         if (rightRef.current) {
             rightRef.current.setValue(output);
         }
-    };
+    }, [output]);
 
     const onCopy = async (): Promise<void> => {
         try {
@@ -72,7 +72,7 @@ export const Editor: React.FC = (): React.ReactElement => {
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => run());
         // Ctrl/Cmd + B = format
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () => onFormatOut());
-    }, [run]);
+    }, [onFormatOut, run]);
 
     const onKotlin = (): void => {
         setInput(sampleKotlin);
