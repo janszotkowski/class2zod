@@ -1,0 +1,114 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "timezone": "Europe/Prague",
+  "schedule": [
+    "after 08:00 before 18:00 every weekday"
+  ],
+  "dependencyDashboard": true,
+  // Strategie verzí – respektuj pinované verze a nahrazuj
+  "rangeStrategy": "replace",
+  "packageRules": [
+    // === React core + typy + ESLint kolem Reactu ===
+    {
+      "groupName": "React core & types & lint",
+      "matchPackagePatterns": [
+        "^react$",
+        "^react-dom$",
+        "^@types/react$",
+        "^@types/react-dom$",
+        "^eslint-plugin-react$",
+        "^eslint-plugin-react-hooks$"
+      ]
+    },
+    // === React ecosystem – doplňky, které typicky ladí s verzí Reactu ===
+    {
+      "groupName": "React ecosystem (UI libs)",
+      "matchPackagePatterns": [
+        "^react-toastify$",
+        "^@monaco-editor/react$"
+      ]
+    },
+    // === Rsbuild toolchain ===
+    {
+      "groupName": "Rsbuild (core + plugins)",
+      "matchPackagePatterns": [
+        "^@rsbuild/core$",
+        "^@rsbuild/plugin-react$",
+        "^@rsbuild/plugin-sass$"
+      ]
+    },
+    // === TypeScript toolchain (TS, typy pro Node, ESLint jádro a TS pluginy) ===
+    {
+      "groupName": "TypeScript & ESLint toolchain",
+      "matchPackagePatterns": [
+        "^typescript$",
+        "^@types/node$",
+        "^eslint$",
+        "^@typescript-eslint/",
+        "^eslint-plugin-import$",
+        "^@stylistic/eslint-plugin$",
+        "^globals$",
+        "^eslint-plugin-interface-to-type$"
+      ],
+      // Dev-only věci můžeme aktualizovat agresivněji (volitelné)
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "automerge": false
+    },
+    // === Stylelint ekosystém ===
+    {
+      "groupName": "Stylelint",
+      "matchPackagePatterns": [
+        "^stylelint$",
+        "^stylelint-config-standard-scss$",
+        "^stylelint-scss$"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ]
+    },
+    // === Testování ===
+    {
+      "groupName": "Vitest",
+      "matchPackagePatterns": [
+        "^vitest$"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ]
+    },
+    // === Vite pluginy a související utilitky (i když build je Rsbuild) ===
+    {
+      "groupName": "Vite plugins & paths",
+      "matchPackagePatterns": [
+        "^vite-tsconfig-paths$"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ]
+    },
+    // Obecné pravidlo: devDependencies mohou mít minor/patch častěji
+    {
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "prPriority": 0
+    },
+    // Obecné pravidlo: major updaty odděleně (1 PR = 1 major balíček)
+    {
+      "separateMajorMinor": true,
+      "separateMultipleMajor": true,
+      "matchUpdateTypes": [
+        "major"
+      ]
+    }
+  ]
+}
