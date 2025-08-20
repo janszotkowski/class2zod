@@ -101,14 +101,6 @@
         "patch"
       ],
       "prPriority": 0
-    },
-    // Obecné pravidlo: major updaty odděleně (1 PR = 1 major balíček)
-    {
-      "separateMajorMinor": true,
-      "separateMultipleMajor": true,
-      "matchUpdateTypes": [
-        "major"
-      ]
     }
   ]
 }
