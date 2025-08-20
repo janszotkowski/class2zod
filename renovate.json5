@@ -8,7 +8,6 @@
     "after 08:00 before 18:00 every weekday"
   ],
   "dependencyDashboard": true,
-  // Strategie verzí – respektuj pinované verze a nahrazuj
   "rangeStrategy": "replace",
   "packageRules": [
     // === React core + typy + ESLint kolem Reactu ===
