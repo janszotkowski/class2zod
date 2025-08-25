@@ -599,10 +599,10 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.46.2.tgz#87079f137b5fdb75da11508419aa998cc8cc3d8b"
   integrity sha512-CvUo2ixeIQGtF6WvuB87XWqPQkoFAFqW+HUo/WzHwuHDvIwZCtjdWXoYCcr06iKGydiqTclC4jU/TNObC/xKZg==
 
-"@rsbuild/core@1.4.15":
-  version "1.4.15"
-  resolved "https://registry.yarnpkg.com/@rsbuild/core/-/core-1.4.15.tgz#6c16d0c508c5e60d8555469b89f1a4a95002096e"
-  integrity sha512-KoSTtKjzQUQwamcbeCp63Ne9kL7io1WI4+skTJe2chfLz6wsp/Gfg8aKkfs1DuyG1p+zxFDcYpwTWMsNtxqqiw==
+"@rsbuild/core@1.4.16":
+  version "1.4.16"
+  resolved "https://registry.yarnpkg.com/@rsbuild/core/-/core-1.4.16.tgz#eb47fdc00c720b471c53d0535bfc47927f52054c"
+  integrity sha512-t2684BBkqAh+dw/v00ySQc5P5SMul4a428L1qHwwIWFPAZ0bnus/hw/wI8nM2AQpMcKfJPkdyVSGm4ueCYPtPw==
   dependencies:
     "@rspack/core" "1.4.11"
     "@rspack/lite-tapable" "~1.0.1"
